@@ -1,0 +1,46 @@
+# Declaracao #
+var int a <- 1;
+var double b <- 2,3;
+var String c <- 'teste';
+
+# Calculo do result #
+$result <- a + b * c / 5 % 10 - 2;
+
+# Contrucao do whiile #
+while(a === 1){
+	if(a #= 6){
+		$a <- a + 1;
+	}elif(b === 5){
+		$b <- a + 1;
+	}else{
+		$c <- a + 1;
+	}
+	while(a === 4){
+		$b <- 2;
+	}
+}
+
+# Contrucao do foor #
+for(var int i <- 1; i < 5, $i <- i + 1;){
+	&i <- get(int);
+	**show(i);
+}
+
+# Contrucao do swiitch #
+switch(aa){
+	case 1 {
+		$a <- a + 1;
+		break;
+	}
+}
+
+# Chamada da funcaao #
+@function.nome(i);
+
+# Criacao da funcaao #
+function nome(i){
+	$a <- a + 1;
+}
+
+# Abertura de arquivos #
+fopen(caminho);

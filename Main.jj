@@ -1,0 +1,230 @@
+options{
+ static = false;
+ DEBUG_PARSER =	true;
+ DEBUG_TOKEN_MANAGER = true;
+}
+
+PARSER_BEGIN(Main)
+
+import java.io.FileInputStream;
+import java.io.File;
+import java.io.IOException;
+
+public class Main{
+	public static void main(String args []) throws ParseException{
+		try{
+			System.out.println("Lendo arquivo fonte...");
+			FileInputStream fis = new FileInputStream(new File("..//izi-lang//src//fonte.txt"));
+			Main parser = new Main(fis);
+			parser.Start();
+			System.out.println("Arquivo fonte processado corretamente!");
+		}
+		catch (IOException e){
+			System.out.println("Falha ao abrir arquivo fonte.");
+			System.exit(0);
+		}
+	}
+}
+
+PARSER_END(Main)
+// ========   TOKENS =========== //
+
+// Comandos ignorar
+SKIP : { " "| "\t" | "\n" | "\r" }
+
+//Token de comentario de uma linha
+TOKEN : { < COMENTARIO : "#" >  }
+
+//Token final de linha
+TOKEN : { < EOL : ";" >  }
+
+//Token para o indentificar var das variaveis
+TOKEN : { < VAR : "var" > }
+
+//Token para o if
+TOKEN : { < IF : "if" > }
+
+//Token para o else
+TOKEN : { < ELSE : "else" > }
+
+//Token para o else if
+TOKEN : { < ELIF : "elif" > }
+
+//Token para a entrada de dados
+TOKEN : { < IN : "get" > }
+
+//Token para a saida de dados
+TOKEN : { < OUT : "show" > }
+
+//Token para o while
+TOKEN : { < WHILE : "while" > }
+
+//Token para o switch
+TOKEN: { < SWITCH : "switch" > }
+
+//Token para case
+TOKEN: { < CASE : "case" > }
+
+//Token para break
+TOKEN: { < BREAK : "break" > }
+
+//Token para o for
+TOKEN: {< FOR : "for" >}
+
+//Token para funções
+TOKEN: { < FUNCTION : "function" > }
+
+//Token para funções
+TOKEN: { < FOPEN : "fopen" > }
+
+//Token para o virgula
+TOKEN: {< VIRG : "," >}
+
+//Token para o ponto
+TOKEN : { < DOT : "." >  }
+
+//Token para letras e digitos
+TOKEN : { < #LETTER: ["a"-"z","A"-"Z"] > |
+		  < #DIGIT: ["0"-"9"]  > }
+		  
+//Token para os numeros racionais		  
+TOKEN : { < NUM : (["0"-"9"])+","(["0"-"9"])+ > }
+
+//Tokens para os operadores aritméticos
+TOKEN : { < OPA : ( < ADD > | < SUB > | < MUL > | < DIV > | < MOD > ) > |
+< #ADD: "+" > | < #SUB: "-" > | < #MUL: "*" > | < #DIV: "/" > | < #MOD: "%" > 
+}
+
+//Tokens para os operadores lógicos
+TOKEN : { < OPB : ( < MAJ > | < MIN > | < EQL > | < DIF > ) > |
+	< #MAJ: ">" > | < #MIN: "<" > | < #EQL: "===" > | < #DIF: "#=" > 
+}
+
+//Tokens de estrutura
+//Token de começo e final de instrução
+TOKEN : { < CHA_A : "{" >  }
+TOKEN : { < CHA_F : "}" >  }
+
+//Token começo e final de interação
+TOKEN : { < PAR_A : "(" >  }
+TOKEN : { < PAR_F : ")" >  }
+
+//Token das aspas
+TOKEN : { < ASPAS : "'" >  }
+
+//Token de auxilio para entrada e saida de dados
+TOKEN : { < ECO : "&" >  }
+TOKEN : { < AST : "**" >  }
+TOKEN : { < ARR : "@" >  }
+
+
+//Token dos tipos de variaveis
+TOKEN : { < TIPO : (< INT > | < STRING > | < BYTE > | < SHORT > | < LONG > |
+		  < FLOAT > | < DOUBLE > | < CHAR > | < BOOLEAN > ) > |
+	< #INT : "int" > | < #STRING : "String" > | < #BYTE : "byte" > |
+	< #SHORT : "short" > | < #LONG : "long" > | < #FLOAT : "float" > |
+	< #DOUBLE : "double" > | < #CHAR : "char" > | < #BOOLEAN : "boolean" > 
+}
+
+//Token para valores booleanos
+TOKEN: { < TF: ( < TRUE > | < FALSE > ) > | < #TRUE: "true" > | < #FALSE: "false" >  }
+
+//Token de atribuicao
+TOKEN : { < TO : "<-" > }
+
+//Token de inicio de uma conta
+TOKEN : { < COUNTS : "$" > }
+
+//Token para variaveis
+TOKEN : { < LITERALS : < LETTER >(< LETTER >|< DIGIT >|"_")* > }
+
+//Token para valores
+TOKEN : { < VALUES : < DIGIT >( < DIGIT > )* | < LITERALS > > }
+
+TOKEN : { < TEIA : < ASPAS > ( < LITERALS > | " " ) < ASPAS > > } 
+
+// ======== FUNÇÕES =========== //
+
+//Execucao do parser
+void Start() : {} {
+  ( COMANDOS() )  < EOF >
+}
+
+//Função para todos os comandos possíveis
+void COMANDOS(): { } {
+  ( WHILE() | OUT() | IN() | IF() | ID() | FOR() | EXPA() | SWITCH() | CASE() | COMENTARIO() | CALLF() | FUNCTION() | FOPEN()) *
+}
+//Função para comentarios
+void COMENTARIO(): {} {
+  ( (< COMENTARIO > (< LITERALS >)* < COMENTARIO >) )
+}
+
+//Funcoes para atribuicao
+void ID(): {} {
+  ( < VAR > < TIPO > < LITERALS > ( "," IDR() | < TO > IDIR() ) * < EOL > )
+}
+void IDR(): {} {
+  ( < LITERALS > | "," IDR() ) +
+}
+void IDIR(): {} {
+  ( < VALUES > | < TF > | < NUM > | < TEIA > ( "," < LITERALS > < TO > ( < VALUES > | < TF > | < NUM > | < TEIA > ) ) * )
+} 
+
+//Função para operações aritmeticas
+void EXPA(): {} {
+  ( < COUNTS >< LITERALS > < TO > ( < VALUES > | < NUM > | < LITERALS > ) ( < OPA > ( < VALUES > | < NUM > | < LITERALS > ) ) * < EOL > ) 
+}
+
+//Função para operações booleanas
+void EXPB(): {} {
+  ( ( < VALUES > | < NUM > | < LITERALS > ) < OPB > ( < VALUES > | < NUM > | < LITERALS > ))*
+}
+
+//Funções para criação do for
+void FOR(): { } {
+  ( < FOR > <PAR_A > ID() EXPB() < VIRG > EXPA() <PAR_F > < CHA_A > ( COMANDOS() ) <CHA_F > )
+}
+
+//Funções para a estrutura if
+void IFE(): { } {
+  ( <PAR_A > EXPB() < PAR_F > < CHA_A > ( COMANDOS() ) <CHA_F > ) *
+}
+void IF(): { } {
+  ( < IF > IFE() ( < ELIF > IFE() ) * ( < ELSE > < CHA_A > ( COMANDOS() ) <CHA_F > ) * )
+}
+
+//Funções para entrada de dados
+void IN(): { } {
+  ( < ECO >< LITERALS > < TO > < IN > < PAR_A > < TIPO > < PAR_F > < EOL > )
+}
+
+//Funções para entrada de dados
+void OUT(): { } {
+  ( < AST >< OUT > < PAR_A > < LITERALS > < PAR_F > < EOL > )
+}
+
+//Funções da estrutura while
+void WHILE(): { } {
+  ( < WHILE > < PAR_A > ( EXPB() ) < PAR_F > < CHA_A > ( COMANDOS() ) <CHA_F > )
+}
+
+//Funções da estrutura switch
+void CASE(): { } {
+  < CASE > < VALUES > <CHA_A > ( COMANDOS() ) <BREAK > <EOL > < CHA_F >
+}
+void SWITCH(): { } {
+  < SWITCH > <PAR_A > < LITERALS > < PAR_F > <CHA_A > ( COMANDOS() ) < CHA_F >
+}
+
+//Funções para funcoes
+void CALLF(): { } {
+  ( < ARR >< FUNCTION > < DOT > < LITERALS > < PAR_A > < LITERALS > < PAR_F > < EOL > )
+}
+void FUNCTION(): { } {
+  ( < FUNCTION > < LITERALS > < PAR_A > < LITERALS > < PAR_F > <CHA_A > ( COMANDOS() ) < CHA_F > )
+}
+
+//Funções para abertura de arquivos
+void FOPEN(): { } {
+  ( < FOPEN >< PAR_A > < LITERALS > < PAR_F > < EOL > )
+}
